@@ -36,7 +36,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				NamesTest.thrift \
 				InitialismsTest.thrift \
 				DontExportRWTest.thrift \
-				dontexportrwtest/compile_test.go
+				dontexportrwtest/compile_test.go \
+				IgnoreInitialismsTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -52,7 +53,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) NamesTest.thrift
 	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
 	$(THRIFT) $(THRIFTARGS),read_write_private DontExportRWTest.thrift
-	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
+	$(THRIFT) $(THRIFTARGS),ignore_initialisms IgnoreInitialismsTest.thrift
+	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
@@ -68,7 +70,8 @@ check: gopath
 				errortest	\
 				namestest \
 				initialismstest \
-				dontexportrwtest
+				dontexportrwtest \
+				ignoreinitialismstest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:
@@ -92,4 +95,5 @@ EXTRA_DIST = \
 	ErrorTest.thrift \
 	NamesTest.thrift \
 	InitialismsTest.thrift \
-	DontExportRWTest.thrift
+	DontExportRWTest.thrift \
+	IgnoreInitialismsTest.thrift

@@ -24,7 +24,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 lib_LTLIBRARIES = libthrift_c_glib.la
 pkgconfig_DATA = thrift_c_glib.pc
 
-AM_CFLAGS = -Isrc -I src/thrift/c_glib
+AM_CPPFLAGS = -Isrc -I src/thrift/c_glib
+AM_CFLAGS = -Wall -Wextra -pedantic
 
 # Define the source files for the module
 

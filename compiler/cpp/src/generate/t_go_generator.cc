@@ -97,6 +97,9 @@ public:
 
     iter = parsed_options.find("read_write_private");
     read_write_private_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("ignore_initialisms");
+    ignore_initialisms_ = (iter != parsed_options.end());
   }
 
   /**
@@ -282,6 +285,7 @@ private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
   bool read_write_private_;
+  bool ignore_initialisms_;
 
   /**
    * File streams
@@ -302,6 +306,7 @@ private:
   std::set<std::string> commonInitialisms;
 
   std::string camelcase(const std::string& value) const;
+  void fix_common_initialism(std::string& value, int i) const;
   std::string publicize(const std::string& value, bool is_args_or_result = false) const;
   std::string privatize(const std::string& value) const;
   std::string new_prefix(const std::string& value) const;
@@ -419,23 +424,34 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
 std::string t_go_generator::camelcase(const std::string& value) const {
   std::string value2(value);
   std::setlocale(LC_ALL, "C"); // set locale to classic
+  
+  // Fix common initialism in first word
+  fix_common_initialism(value2, 0);
 
-  // as long as we are changing things, let's change _ followed by lowercase to capital and fix
-  // common initialisms
+  // as long as we are changing things, let's change _ followed by lowercase to 
+  // capital and fix common initialisms
   for (std::string::size_type i = 1; i < value2.size() - 1; ++i) {
     if (value2[i] == '_') {
       if (islower(value2[i + 1])) {
         value2.replace(i, 2, 1, toupper(value2[i + 1]));
       }
-      std::string word = value2.substr(i, value2.find('_', i));
-      std::transform(word.begin(), word.end(), word.begin(), ::toupper);
-      if (commonInitialisms.find(word) != commonInitialisms.end()) {
-        value2.replace(i, word.length(), word);
-      }
+      fix_common_initialism(value2, i);
     }
   }
 
   return value2;
+}
+
+// Checks to see if the word starting at i in value contains a common initialism
+// and if so replaces it with the upper case version of the word.
+void t_go_generator::fix_common_initialism(std::string& value, int i) const {
+  if (!ignore_initialisms_) {
+    std::string word = value.substr(i, value.find('_', i));
+    std::transform(word.begin(), word.end(), word.begin(), ::toupper);
+    if (commonInitialisms.find(word) != commonInitialisms.end()) {
+      value.replace(i, word.length(), word);
+    }
+  }
 }
 
 std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) const {
@@ -3564,5 +3580,7 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \
                           "    thrift_import=   Override thrift package import path (default:" + default_thrift_import + ")\n" \
                           "    package=         Package name (default: inferred from thrift file name)\n" \
+                          "    ignore_initialisms\n"
+                          "                     Disable automatic spelling correction of initialisms (e.g. \"URL\")\n" \
                           "    read_write_private\n"
                           "                     Make read/write methods private, default is public Read/Write\n")

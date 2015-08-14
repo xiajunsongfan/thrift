@@ -19,7 +19,7 @@
 
 # Find required packages
 set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono system thread unit_test_framework)
+find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 #Make sure gen-cpp files can be included
@@ -82,17 +82,29 @@ add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
+if ( MSVC )
+    # Disable C4503: decorated name length exceeded, name was truncated
+    # 'insanity' results in very long decorated names
+    set_property( TARGET UnitTests APPEND_STRING PROPERTY COMPILE_FLAGS /wd4503 )
+endif ( MSVC )
 
-add_executable(TSocketInterruptTest TSocketInterruptTest.cpp)
-target_link_libraries(TSocketInterruptTest
+
+set( TInterruptTest_SOURCES TSocketInterruptTest.cpp )
+if (WIN32)
+    list(APPEND TInterruptTest_SOURCES
+        TPipeInterruptTest.cpp
+    )
+endif()
+add_executable(TInterruptTest ${TInterruptTest_SOURCES})
+target_link_libraries(TInterruptTest
     testgencpp
     ${Boost_LIBRARIES}
 )
-LINK_AGAINST_THRIFT_LIBRARY(TSocketInterruptTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-target_link_libraries(TSocketInterruptTest -lrt)
+target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TSocketInterruptTest COMMAND TSocketInterruptTest)
+add_test(NAME TInterruptTest COMMAND TInterruptTest)
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
@@ -104,6 +116,17 @@ if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(TServerIntegrationTest -lrt)
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
+
+add_executable(SecurityTest SecurityTest.cpp)
+target_link_libraries(SecurityTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+target_link_libraries(SecurityTest -lrt)
+endif ()
+add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 if(WITH_ZLIB)
 add_executable(TransportTest TransportTest.cpp)
@@ -147,10 +170,16 @@ add_test(NAME TFileTransportTest COMMAND TFileTransportTest)
 endif()
 
 add_executable(TFDTransportTest TFDTransportTest.cpp)
+target_link_libraries(TFDTransportTest
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(TFDTransportTest thrift)
 add_test(NAME TFDTransportTest COMMAND TFDTransportTest)
 
 add_executable(TPipedTransportTest TPipedTransportTest.cpp)
+target_link_libraries(TPipedTransportTest
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(TPipedTransportTest thrift)
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 
@@ -161,35 +190,53 @@ set(AllProtocolsTest_SOURCES
     )
 
 add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
-target_link_libraries(AllProtocolsTest testgencpp)
+target_link_libraries(AllProtocolsTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(AllProtocolsTest thrift)
 add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
 
 # The debug run-time in Windows asserts on isprint() with negative inputs
 if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
 add_executable(DebugProtoTest DebugProtoTest.cpp)
-target_link_libraries(DebugProtoTest testgencpp)
+target_link_libraries(DebugProtoTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
 add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
 endif()
 
 add_executable(JSONProtoTest JSONProtoTest.cpp)
-target_link_libraries(JSONProtoTest testgencpp)
+target_link_libraries(JSONProtoTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(JSONProtoTest thrift)
 add_test(NAME JSONProtoTest COMMAND JSONProtoTest)
 
 add_executable(OptionalRequiredTest OptionalRequiredTest.cpp)
-target_link_libraries(OptionalRequiredTest testgencpp)
+target_link_libraries(OptionalRequiredTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(OptionalRequiredTest thrift)
 add_test(NAME OptionalRequiredTest COMMAND OptionalRequiredTest)
 
 add_executable(RecursiveTest RecursiveTest.cpp)
-target_link_libraries(RecursiveTest testgencpp)
+target_link_libraries(RecursiveTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(RecursiveTest thrift)
 add_test(NAME RecursiveTest COMMAND RecursiveTest)
 
 add_executable(SpecializationTest SpecializationTest.cpp)
-target_link_libraries(SpecializationTest testgencpp)
+target_link_libraries(SpecializationTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
 LINK_AGAINST_THRIFT_LIBRARY(SpecializationTest thrift)
 add_test(NAME SpecializationTest COMMAND SpecializationTest)
 
@@ -278,7 +325,7 @@ endif()
 
 
 add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp  gen-cpp/EmptyService.h
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h
@@ -290,7 +337,7 @@ add_custom_command(OUTPUT gen-cpp/TypedefTest_types.cpp gen-cpp/TypedefTest_type
 )
 
 add_custom_command(OUTPUT gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h
@@ -298,11 +345,11 @@ add_custom_command(OUTPUT gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h
 )
 
 add_custom_command(OUTPUT gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h
-    COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND thrift-compiler --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h

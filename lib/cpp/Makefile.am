@@ -66,15 +66,16 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/TOutput.cpp \
                        src/thrift/VirtualProfiling.cpp \
                        src/thrift/async/TAsyncChannel.cpp \
+                       src/thrift/async/TConcurrentClientSyncInfo.cpp \
                        src/thrift/concurrency/ThreadManager.cpp \
                        src/thrift/concurrency/TimerManager.cpp \
                        src/thrift/concurrency/Util.cpp \
                        src/thrift/processor/PeekProcessor.cpp \
                        src/thrift/protocol/TDebugProtocol.cpp \
-                       src/thrift/protocol/TDenseProtocol.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
                        src/thrift/protocol/TBase64Utils.cpp \
                        src/thrift/protocol/TMultiplexedProtocol.cpp \
+                       src/thrift/protocol/TProtocol.cpp \
                        src/thrift/transport/TTransportException.cpp \
                        src/thrift/transport/TFDTransport.cpp \
                        src/thrift/transport/TFileTransport.cpp \
@@ -151,7 +152,6 @@ include_thrift_HEADERS = \
                          src/thrift/TDispatchProcessor.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \
-                         src/thrift/TReflectionLocal.h \
                          src/thrift/TProcessor.h \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
@@ -182,7 +182,6 @@ include_protocol_HEADERS = \
                          src/thrift/protocol/TBinaryProtocol.tcc \
                          src/thrift/protocol/TCompactProtocol.h \
                          src/thrift/protocol/TCompactProtocol.tcc \
-                         src/thrift/protocol/TDenseProtocol.h \
                          src/thrift/protocol/TDebugProtocol.h \
                          src/thrift/protocol/TBase64Utils.h \
                          src/thrift/protocol/TJSONProtocol.h \
@@ -241,6 +240,7 @@ include_async_HEADERS = \
                      src/thrift/async/TAsyncProcessor.h \
                      src/thrift/async/TAsyncBufferProcessor.h \
                      src/thrift/async/TAsyncProtocolProcessor.h \
+                     src/thrift/async/TConcurrentClientSyncInfo.h \
                      src/thrift/async/TEvhttpClientChannel.h \
                      src/thrift/async/TEvhttpServer.h
 

@@ -23,7 +23,7 @@
 
 AM_YFLAGS = -d
 LIBS =
-BUILT_SOURCES = thrifty.cc
+BUILT_SOURCES = src/thrifty.cc
 
 bin_PROGRAMS = thrift
 
@@ -40,6 +40,7 @@ thrift_SOURCES = src/main.cc \
                  src/platform.h \
                  src/logging.h \
                  src/md5.h \
+                 src/audit/t_audit.cpp \
                  src/parse/t_doc.h \
                  src/parse/t_type.h \
                  src/parse/t_base_type.h \

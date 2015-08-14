@@ -19,7 +19,7 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
-project(thrift)
+project("Apache Thrift")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
 
@@ -73,6 +73,9 @@ endif()
 
 if(BUILD_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
+    if(BUILD_TUTORIALS)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tutorial/cpp)
+    endif(BUILD_TUTORIALS)
     if(BUILD_TESTING)
         if(WITH_LIBEVENT AND WITH_ZLIB AND WITH_OPENSSL)
             add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/cpp)
@@ -92,6 +95,9 @@ endif()
 
 if(BUILD_PYTHON)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
+    if(BUILD_TESTING)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/py)
+    endif()
 endif()
 
 PRINT_CONFIG_SUMMARY()
