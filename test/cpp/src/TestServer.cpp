@@ -78,6 +78,11 @@ public:
     out = thing;
   }
 
+  bool testBool(const bool thing) {
+    printf("testBool(%s)\n", thing ? "true" : "false");
+    return thing;
+  }
+
   int8_t testByte(const int8_t thing) {
     printf("testByte(%d)\n", (int)thing);
     return thing;
@@ -216,34 +221,14 @@ public:
   }
 
   void testInsanity(map<UserId, map<Numberz::type, Insanity> >& insane, const Insanity& argument) {
-    (void)argument;
     printf("testInsanity()\n");
 
-    Xtruct hello;
-    hello.string_thing = "Hello2";
-    hello.byte_thing = 2;
-    hello.i32_thing = 2;
-    hello.i64_thing = 2;
-
-    Xtruct goodbye;
-    goodbye.string_thing = "Goodbye4";
-    goodbye.byte_thing = 4;
-    goodbye.i32_thing = 4;
-    goodbye.i64_thing = 4;
-
-    Insanity crazy;
-    crazy.userMap.insert(make_pair(Numberz::EIGHT, 8));
-    crazy.xtructs.push_back(goodbye);
-
     Insanity looney;
-    crazy.userMap.insert(make_pair(Numberz::FIVE, 5));
-    crazy.xtructs.push_back(hello);
-
     map<Numberz::type, Insanity> first_map;
     map<Numberz::type, Insanity> second_map;
 
-    first_map.insert(make_pair(Numberz::TWO, crazy));
-    first_map.insert(make_pair(Numberz::THREE, crazy));
+    first_map.insert(make_pair(Numberz::TWO, argument));
+    first_map.insert(make_pair(Numberz::THREE, argument));
 
     second_map.insert(make_pair(Numberz::SIX, looney));
 
@@ -395,6 +380,11 @@ public:
                           const std::string& thing) {
     std::string res;
     _delegate->testString(res, thing);
+    cob(res);
+  }
+
+  virtual void testBool(tcxx::function<void(bool const& _return)> cob, const bool thing) {
+    bool res = _delegate->testBool(thing);
     cob(res);
   }
 
@@ -556,6 +546,7 @@ int main(int argc, char** argv) {
   string protocol_type = "binary";
   string server_type = "simple";
   string domain_socket = "";
+  bool abstract_namespace = false;
   size_t workers = 4;
 
   boost::program_options::options_description desc("Allowed options");
@@ -566,6 +557,8 @@ int main(int argc, char** argv) {
                                boost::program_options::value<string>(&domain_socket)
                                    ->default_value(domain_socket),
                                "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")(
+      "abstract-namespace",
+      "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
       "server-type",
       boost::program_options::value<string>(&server_type)->default_value(server_type),
       "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")(
@@ -628,6 +621,10 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+  if (vm.count("abstract-namespace")) {
+    abstract_namespace = true;
+  }
+
   // Dispatcher
   boost::shared_ptr<TProtocolFactory> protocolFactory;
   if (protocol_type == "json") {
@@ -663,8 +660,14 @@ int main(int argc, char** argv) {
     serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {
     if (domain_socket != "") {
-      unlink(domain_socket.c_str());
-      serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+      if (abstract_namespace) {
+        std::string abstract_socket("\0", 1);
+        abstract_socket += domain_socket;
+        serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(abstract_socket));
+      } else {
+        unlink(domain_socket.c_str());
+        serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+      }
       port = 0;
     } else {
       serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(port));
@@ -687,7 +690,11 @@ int main(int argc, char** argv) {
 
   // Server Info
   cout << "Starting \"" << server_type << "\" server (" << transport_type << "/" << protocol_type
-       << ") listen on: " << domain_socket;
+       << ") listen on: ";
+  if (abstract_namespace) {
+    cout << '@';
+  }
+  cout << domain_socket;
   if (port != 0) {
     cout << port;
   }

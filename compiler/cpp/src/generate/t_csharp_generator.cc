@@ -620,7 +620,7 @@ std::string t_csharp_generator::render_const_value(ofstream& out,
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
@@ -1943,8 +1943,9 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   string argsname = tfunction->get_name() + "_args";
   string resultname = tfunction->get_name() + "_result";
 
-  f_service_ << indent() << argsname << " args = new " << argsname << "();" << endl << indent()
-             << "args.Read(iprot);" << endl << indent() << "iprot.ReadMessageEnd();" << endl;
+  f_service_ << indent() << argsname << " args = new " << argsname << "();" << endl
+             << indent() << "args.Read(iprot);" << endl
+             << indent() << "iprot.ReadMessageEnd();" << endl;
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -1954,8 +1955,13 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
     f_service_ << indent() << resultname << " result = new " << resultname << "();" << endl;
   }
 
+  f_service_ << indent() << "try" << endl
+             << indent() << "{" << endl;
+  indent_up();
+
   if (xceptions.size() > 0) {
-    f_service_ << indent() << "try {" << endl;
+    f_service_ << indent() << "try" << endl
+               << indent() << "{" << endl;
     indent_up();
   }
 
@@ -1984,38 +1990,55 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   cleanup_member_name_mapping(arg_struct);
   f_service_ << ");" << endl;
 
-  if (!tfunction->is_oneway() && xceptions.size() > 0) {
+  prepare_member_name_mapping(xs, xs->get_members(), resultname);
+  if (xceptions.size() > 0) {
     indent_down();
-    f_service_ << indent() << "}";
-    prepare_member_name_mapping(xs, xs->get_members(), resultname);
+    f_service_ << indent() << "}" << endl;
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " "
-                 << (*x_iter)->get_name() << ") {" << endl;
+      f_service_ << indent() << "catch (" << type_name((*x_iter)->get_type(), false, false) << " "
+                 << (*x_iter)->get_name() << ")" << endl
+                 << indent() << "{" << endl;
       if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ << indent() << "result." << prop_name(*x_iter) << " = " << (*x_iter)->get_name()
                    << ";" << endl;
         indent_down();
-        f_service_ << indent() << "}";
-      } else {
-        f_service_ << "}";
       }
+      f_service_ << indent() << "}" << endl;
     }
-    cleanup_member_name_mapping(xs);
-    f_service_ << endl;
   }
+  if (!tfunction->is_oneway()) {
+    f_service_ << indent() << "oprot.WriteMessageBegin(new TMessage(\"" << tfunction->get_name()
+               << "\", TMessageType.Reply, seqid)); " << endl;
+    f_service_ << indent() << "result.Write(oprot);" << endl;
+  }
+  indent_down();
+
+  cleanup_member_name_mapping(xs);
+
+  f_service_ << indent() << "}" << endl
+             << indent() << "catch (TTransportException)" << endl
+             << indent() << "{" << endl
+             << indent() << "  throw;" << endl
+             << indent() << "}" << endl
+             << indent() << "catch (Exception ex)" << endl
+             << indent() << "{" << endl
+             << indent() << "  Console.Error.WriteLine(\"Error occurred in processor:\");" << endl
+             << indent() << "  Console.Error.WriteLine(ex.ToString());" << endl;
 
   if (tfunction->is_oneway()) {
-    f_service_ << indent() << "return;" << endl;
-    scope_down(f_service_);
-
-    return;
+    f_service_ << indent() << "}" << endl;
+  } else {
+    f_service_ << indent() << "  TApplicationException x = new TApplicationException" << indent()
+               << "(TApplicationException.ExceptionType.InternalError,\" Internal error.\");"
+               << endl
+               << indent() << "  oprot.WriteMessageBegin(new TMessage(\"" << tfunction->get_name()
+               << "\", TMessageType.Exception, seqid));" << endl
+               << indent() << "  x.Write(oprot);" << endl
+               << indent() << "}" << endl;
+    f_service_ << indent() << "oprot.WriteMessageEnd();" << endl
+               << indent() << "oprot.Transport.Flush();" << endl;
   }
-
-  f_service_ << indent() << "oprot.WriteMessageBegin(new TMessage(\"" << tfunction->get_name()
-             << "\", TMessageType.Reply, seqid)); " << endl << indent() << "result.Write(oprot);"
-             << endl << indent() << "oprot.WriteMessageEnd();" << endl << indent()
-             << "oprot.Transport.Flush();" << endl;
 
   scope_down(f_service_);
 
@@ -2140,7 +2163,7 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "ReadBool();";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "ReadByte();";
         break;
       case t_base_type::TYPE_I16:
@@ -2318,7 +2341,7 @@ void t_csharp_generator::generate_serialize_field(ofstream& out,
       case t_base_type::TYPE_BOOL:
         out << "WriteBool(" << nullable_name << ");";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
         out << "WriteByte(" << nullable_name << ");";
         break;
       case t_base_type::TYPE_I16:
@@ -2660,7 +2683,7 @@ string t_csharp_generator::base_type_name(t_base_type* tbase,
     }
   case t_base_type::TYPE_BOOL:
     return "bool" + postfix;
-  case t_base_type::TYPE_BYTE:
+  case t_base_type::TYPE_I8:
     return "sbyte" + postfix;
   case t_base_type::TYPE_I16:
     return "short" + postfix;
@@ -2696,7 +2719,7 @@ string t_csharp_generator::declare_field(t_field* tfield, bool init, std::string
       case t_base_type::TYPE_BOOL:
         result += " = false";
         break;
-      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
@@ -2775,7 +2798,7 @@ string t_csharp_generator::type_to_enum(t_type* type) {
       return "TType.String";
     case t_base_type::TYPE_BOOL:
       return "TType.Bool";
-    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I8:
       return "TType.Byte";
     case t_base_type::TYPE_I16:
       return "TType.I16";

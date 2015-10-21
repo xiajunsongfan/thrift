@@ -69,7 +69,11 @@ THRIFTCODE= \
             src/TException.cs \
             src/TApplicationException.cs
 
+if MONO_MCS
+CSC=mcs
+else
 CSC=gmcs
+endif
 
 if NET_2_0
 MONO_DEFINES=/d:NET_2_0
@@ -83,7 +87,7 @@ Thrift.dll: $(THRIFTCODE)
 clean-local:
 	$(RM) Thrift.dll
 
-precross:
+precross: all-local
 	$(MAKE) -C test/ThriftTest precross
 
 # run csharp tests?
@@ -100,4 +104,5 @@ EXTRA_DIST = \
              src/Properties/AssemblyInfo.WP7.cs \
              src/Transport/TSilverlightSocket.cs \
              test \
+             coding_standards.md \
              README.md

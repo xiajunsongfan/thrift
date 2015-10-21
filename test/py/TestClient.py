@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,11 +19,11 @@
 # under the License.
 #
 
-import sys, glob, os
-sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
-
-import unittest
+import glob
+import os
+import sys
 import time
+import unittest
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -53,8 +53,10 @@ parser.add_option('--transport',  dest="trans", type="string",
 parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
 options, args = parser.parse_args()
 
-script_dir = os.path.dirname(__file__)
+script_dir = os.path.abspath(os.path.dirname(__file__))
+lib_dir = os.path.join(os.path.dirname(os.path.dirname(script_dir)), 'lib', 'py', 'build', 'lib.*')
 sys.path.insert(0, os.path.join(script_dir, options.genpydir))
+sys.path.insert(0, glob.glob(lib_dir)[0])
 
 from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
@@ -65,6 +67,7 @@ from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 from thrift.protocol import TJSONProtocol
+
 
 class AbstractTest(unittest.TestCase):
   def setUp(self):
@@ -95,32 +98,77 @@ class AbstractTest(unittest.TestCase):
     self.transport.close()
 
   def testVoid(self):
+    print('testVoid')
     self.client.testVoid()
 
   def testString(self):
+    print('testString')
     self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
     self.assertEqual(self.client.testString(''), '')
+    self.assertEqual(self.client.testString(u'パイソン'.encode('utf8')), u'パイソン'.encode('utf8'))
+    s = u"""Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
+        Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška,
+        Беларуская, Беларуская (тарашкевіца), Български, Bamanankan,
+        বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн,
+        Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg,
+        Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English,
+        Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt,
+        Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego,
+        Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski,
+        Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia,
+        Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa,
+        ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар,
+        Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino,
+        Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa
+        Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, مازِرونی, Bahasa
+        Melayu, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪
+        Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad,
+        Occitan, Иронау, Papiamentu, Deitsch, Polski, پنجابی, پښتو,
+        Norfuk / Pitkern, Português, Runa Simi, Rumantsch, Romani, Română,
+        Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple
+        English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk,
+        Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog,
+        Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük,
+        Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文,
+        Bân-lâm-gú, 粵語"""
+    self.assertEqual(self.client.testString(s.encode('utf8')), s.encode('utf8'))
+
+  def testBool(self):
+    print('testBool')
+    self.assertEqual(self.client.testBool(True), True)
+    self.assertEqual(self.client.testBool(False), False)
 
   def testByte(self):
+    print('testByte')
     self.assertEqual(self.client.testByte(63), 63)
     self.assertEqual(self.client.testByte(-127), -127)
 
   def testI32(self):
+    print('testI32')
     self.assertEqual(self.client.testI32(-1), -1)
     self.assertEqual(self.client.testI32(0), 0)
 
   def testI64(self):
+    print('testI64')
     self.assertEqual(self.client.testI64(1), 1)
     self.assertEqual(self.client.testI64(-34359738368), -34359738368)
 
   def testDouble(self):
+    print('testDouble')
     self.assertEqual(self.client.testDouble(-5.235098235), -5.235098235)
     self.assertEqual(self.client.testDouble(0), 0)
     self.assertEqual(self.client.testDouble(-1), -1)
+    self.assertEqual(self.client.testDouble(-0.000341012439638598279), -0.000341012439638598279)
 
-  # TODO: def testBinary(self)	...
-	
+  def testBinary(self):
+    if isinstance(self, JSONTest):
+      self.skipTest('JSON protocol does not handle binary correctly.')
+    print('testBinary')
+    val = bytearray([i for i in range(0, 256)])
+    self.assertEqual(bytearray(self.client.testBinary(bytes(val))), val)
+
   def testStruct(self):
+    print('testStruct')
     x = Xtruct()
     x.string_thing = "Zero"
     x.byte_thing = 1
@@ -130,46 +178,52 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(y, x)
 
   def testNest(self):
-    inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3,
-      i64_thing=-5)
+    print('testNest')
+    inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3, i64_thing=-5)
     x = Xtruct2(struct_thing=inner, byte_thing=0, i32_thing=0)
     y = self.client.testNest(x)
     self.assertEqual(y, x)
 
   def testMap(self):
+    print('testMap')
     x = {0:1, 1:2, 2:3, 3:4, -1:-2}
     y = self.client.testMap(x)
     self.assertEqual(y, x)
 
   def testSet(self):
+    print('testSet')
     x = set([8, 1, 42])
     y = self.client.testSet(x)
     self.assertEqual(y, x)
 
   def testList(self):
+    print('testList')
     x = [1, 4, 9, -42]
     y = self.client.testList(x)
     self.assertEqual(y, x)
 
   def testEnum(self):
+    print('testEnum')
     x = Numberz.FIVE
     y = self.client.testEnum(x)
     self.assertEqual(y, x)
 
   def testTypedef(self):
+    print('testTypedef')
     x = 0xffffffffffffff # 7 bytes of 0xff
     y = self.client.testTypedef(x)
     self.assertEqual(y, x)
 
+  @unittest.skip('Cannot use dict as dict key')
   def testMapMap(self):
+    print('testMapMap')
     # does not work: dict() is not a hashable type, so a dict() cannot be used as a key in another dict()
-    #x = { {1:10, 2:20}, {1:100, 2:200, 3:300}, {1:1000, 2:2000, 3:3000, 4:4000} }
-    try:
-      y = self.client.testMapMap()
-    except:
-      pass
+    x = {{1: 10, 2: 20}, {1: 100, 2: 200, 3: 300}, {1: 1000, 2: 2000, 3: 3000, 4: 4000}}
+    y = self.client.testMapMap(x)
+    self.assertEqual(y, x)
 
   def testMulti(self):
+    print('testMulti')
     xpected = Xtruct(string_thing='Hello2', byte_thing=74, i32_thing=0xff00ff, i64_thing=0xffffffffd0d0)
     y = self.client.testMulti(xpected.byte_thing,
           xpected.i32_thing,
@@ -180,11 +234,12 @@ class AbstractTest(unittest.TestCase):
     self.assertEqual(y, xpected)
 
   def testException(self):
+    print('testException')
     self.client.testException('Safe')
     try:
       self.client.testException('Xception')
       self.fail("should have gotten exception")
-    except Xception, x:
+    except Xception as x:
       self.assertEqual(x.errorCode, 1001)
       self.assertEqual(x.message, 'Xception')
       # TODO ensure same behavior for repr within generated python variants
@@ -193,12 +248,33 @@ class AbstractTest(unittest.TestCase):
       #self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
     try:
-      self.client.testException("throw_undeclared")
-      self.fail("should have thrown exception")
-    except Exception: # type is undefined
+      self.client.testException('TException')
+      self.fail("should have gotten exception")
+    except TException as x:
       pass
 
+    # Should not throw
+    self.client.testException('success')
+
+  def testMultiException(self):
+    print('testMultiException')
+    try:
+      self.client.testMultiException('Xception', 'ignore')
+    except Xception as ex:
+      self.assertEqual(ex.errorCode, 1001)
+      self.assertEqual(ex.message, 'This is an Xception')
+
+    try:
+      self.client.testMultiException('Xception2', 'ignore')
+    except Xception2 as ex:
+      self.assertEqual(ex.errorCode, 2002)
+      self.assertEqual(ex.struct_thing.string_thing, 'This is an Xception2')
+
+    y = self.client.testMultiException('success', 'foobar')
+    self.assertEqual(y.string_thing, 'foobar')
+
   def testOneway(self):
+    print('testOneway')
     start = time.time()
     self.client.testOneway(1) # type is int, not float
     end = time.time()
@@ -206,6 +282,7 @@ class AbstractTest(unittest.TestCase):
                     "oneway sleep took %f sec" % (end - start))
 
   def testOnewayThenNormal(self):
+    print('testOnewayThenNormal')
     self.client.testOneway(1) # type is int, not float
     self.assertEqual(self.client.testString('Python'), 'Python')
 

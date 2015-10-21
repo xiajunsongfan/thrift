@@ -127,6 +127,7 @@ test-driver
 /lib/c_glib/test/testapplicationexception
 /lib/c_glib/test/testbinaryprotocol
 /lib/c_glib/test/testbufferedtransport
+/lib/c_glib/test/testcontainertest
 /lib/c_glib/test/testdebugproto
 /lib/c_glib/test/testframedtransport
 /lib/c_glib/test/testmemorybuffer
@@ -144,6 +145,10 @@ test-driver
 /lib/d/test/serialization_benchmark
 /lib/d/test/transport_test
 /lib/d/unittest/
+/lib/dart/**/.packages
+/lib/dart/**/packages
+/lib/dart/**/.pub/
+/lib/dart/**/pubspec.lock
 /lib/delphi/src/*.dcu
 /lib/delphi/test/*.identcache
 /lib/delphi/test/*.local
@@ -181,6 +186,7 @@ test-driver
 /lib/hs/dist
 /lib/java/build
 /lib/js/test/build
+/lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
 /lib/perl/MYMETA.json
@@ -233,6 +239,10 @@ test-driver
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
 /test/cpp/TestServer
+/test/dart/**/.packages
+/test/dart/**/packages
+/test/dart/**/.pub/
+/test/dart/**/pubspec.lock
 /test/log/
 /test/test.log
 /test/erl/.eunit/
@@ -241,6 +251,7 @@ test-driver
 /test/go/ThriftTest.thrift
 /test/go/gopath
 /test/go/pkg/
+/test/go/src/code.google.com/
 /test/go/src/github.com/golang/
 /test/go/src/gen/
 /test/go/src/thrift
@@ -253,6 +264,14 @@ test-driver
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
 /tutorial/c_glib/tutorial_server
+/tutorial/csharp/CsharpServer/obj
+/tutorial/csharp/CsharpServer/bin
+/tutorial/csharp/CsharpClient/obj
+/tutorial/csharp/CsharpClient/bin
+/tutorial/dart/**/.packages
+/tutorial/dart/**/packages
+/tutorial/dart/**/.pub/
+/tutorial/dart/**/pubspec.lock
 /tutorial/delphi/*.dsk
 /tutorial/delphi/*.local
 /tutorial/delphi/*.tvsconfig
