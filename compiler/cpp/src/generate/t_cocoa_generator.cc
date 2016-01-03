@@ -345,7 +345,7 @@ string t_cocoa_generator::cocoa_thrift_imports() {
   // Include other Thrift includes
   const vector<t_program*>& other_includes = program_->get_includes();
   for (size_t i = 0; i < other_includes.size(); ++i) {
-    includes << "#import \"" << other_includes[i]->get_name() << ".h\"" << endl;
+    includes << "#import \"" << cocoa_prefix_ << capitalize(other_includes[i]->get_name()) << ".h\"" << endl;
   }
   
   includes << endl;
@@ -2642,15 +2642,17 @@ string t_cocoa_generator::element_type_name(t_type* etype) {
       result = "NSNumber *";
       break;
     }
+  } else if (ttype->is_enum()) {
+      result = "NSNumber *";      
   } else if (ttype->is_map()) {
     t_map *map = (t_map *)ttype;
-    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + ">";
+    result = "NSDictionary<" + element_type_name(map->get_key_type()) + ", " + element_type_name(map->get_val_type()) + "> *";
   } else if (ttype->is_set()) {
     t_set *set = (t_set *)ttype;
-    result = "NSSet<" + element_type_name(set->get_elem_type()) + ">";
+    result = "NSSet<" + element_type_name(set->get_elem_type()) + "> *";
   } else if (ttype->is_list()) {
     t_list *list = (t_list *)ttype;
-    result = "NSArray<" + element_type_name(list->get_elem_type()) + ">";
+    result = "NSArray<" + element_type_name(list->get_elem_type()) + "> *";
   } else if (ttype->is_struct() || ttype->is_xception()) {
     result = cocoa_prefix_ + ttype->get_name() + " *";
   }

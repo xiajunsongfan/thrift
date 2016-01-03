@@ -72,6 +72,7 @@ endif
 
 if WITH_ERLANG
 SUBDIRS += erl
+PRECROSS_TARGET += precross-erl
 endif
 
 #
@@ -123,7 +124,6 @@ EXTRA_DIST = \
 	tests.json \
 	ThriftTest.thrift \
 	TypedefTest.thrift \
-	FastbinaryTest.py \
 	result.html \
 	README.md \
 	valgrind.suppress

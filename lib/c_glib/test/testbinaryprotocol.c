@@ -20,12 +20,8 @@
 /* Disable string-function optimizations when glibc is used, as these produce
    compiler warnings about string length when a string function is used inside
    a call to assert () */
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && \
-    !defined(__OpenBSD__) && !defined(__NetBSD__)
-#include <features.h>
-#endif
-
 #ifdef __GLIBC__
+#include <features.h>
 #define __NO_STRING_INLINES 1
 #endif
 
@@ -45,7 +41,7 @@
 #define TEST_BYTE 123
 #define TEST_I16 12345
 #define TEST_I32 1234567890
-#define TEST_I64 123456789012345
+#define TEST_I64 G_GINT64_CONSTANT (123456789012345)
 #define TEST_DOUBLE 1234567890.123
 #define TEST_STRING "this is a test string 1234567890!@#$%^&*()"
 #define TEST_PORT 51199
